@@ -28,6 +28,7 @@ With this script you can read out the data of your LYWSD03MMC (and some other) s
     -   [Callback for processing the
         data](#callback-for-processing-the-data)
     -   [Send metrics to Prometheus](#send-metrics-to-prometheus)
+    -   [Update the sensor firmware](#update-the-sensor-firmware)
     -   [Node-RED flows](#node-red-flows)
     -   [Callback to Home-Assistant MQTT
         integration](#callback-to-home-assistant-mqtt-integration)
@@ -566,6 +567,17 @@ All data received from the sensor is stored in a list and transmitted sequential
 ## Send metrics to Prometheus
 
 [Read instruction about integration with Prometheus Push Gateway](./prometheus/README.md)
+
+## Update the sensor firmware
+
+`ota.py` updates the [pvvx custom firmware](https://github.com/pvvx/ATC_MiThermometer) over BLE from the receiver, so no phone or browser and no walk to every room. It reads each sensor's hardware id and version, and only flashes sensors older than the latest pvvx release. It needs `pip install bleak`, and the sensors must already run pvvx firmware (the first flash from stock still uses the web flasher). Stop the collector while it runs, as both use the Bluetooth adapter:
+
+    sudo systemctl stop misensor
+    bin/python ota.py --check -df mysensors.ini   # model and installed version
+    bin/python ota.py -df mysensors.ini           # about 4 minutes per sensor
+    sudo systemctl start misensor
+
+MAC addresses can also be given on the command line, and `--file X.bin --force` flashes a given image. See [prometheus/README.md](./prometheus/README.md) for the service setup.
 
 ## Send metrics to Zabbix
 

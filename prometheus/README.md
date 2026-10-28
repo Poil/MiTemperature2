@@ -14,11 +14,27 @@ static_configs:
 honor_labels: true
 ```
 
-## Run sprint with sendToPrometheus.py callback
+## Run as a service (passive mode)
 
-Script will make one mesure and call script that send data to prometheus push gateway
+One process per receiver reads every sensor of `mysensors.ini` (same format as `sensors.ini`) from their BLE advertisements, pvvx Custom or BTHome v2 format:
 
-    > python3 ./LYWSD03MMC.py --device XX:XX:XX:XX:XX:XX --round --debounce -call ./prometheus/sendToPrometheus.py -n living_room -c 1
+    git clone https://github.com/Poil/MiTemperature2 ~/pi/MiTemperature2 && cd ~/pi/MiTemperature2
+    sudo apt install python3-venv python3-bluez libbluetooth-dev
+    python3 -m venv --system-site-packages . && bin/pip install prometheus_client pycryptodomex requests bleak
+    sudo cp prometheus/misensor.service /etc/systemd/system/ && sudo systemctl enable --now misensor
+
+`--bthome-onlyfull-transmit` matters for BTHome sensors: temperature/humidity and battery come in separate packets, and without it the missing values are pushed as 0.
+
+## Update the sensor firmware from the receiver
+
+`ota.py` flashes the latest [pvvx firmware](https://github.com/pvvx/ATC_MiThermometer) over BLE, without phone or browser, and only to sensors older than the latest release. The image is chosen from the hardware id reported by the sensor. Stop the collector first, as both use the Bluetooth adapter:
+
+    sudo systemctl stop misensor
+    bin/python ota.py --check -df mysensors.ini   # model and installed version
+    bin/python ota.py -df mysensors.ini           # about 4 minutes per sensor
+    sudo systemctl start misensor
+
+A transfer that is cut short is harmless: the sensor only switches to the new image after its CRC check.
 
 ## Grafana Dashboard
 

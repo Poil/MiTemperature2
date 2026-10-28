@@ -1,0 +1,21 @@
+# Passive collector for every sensor of mysensors.ini, pushed to the local pushgateway.
+# sudo cp prometheus/misensor.service /etc/systemd/system/ && sudo systemctl enable --now misensor
+[Unit]
+Description=MiSensor service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=benjamin
+WorkingDirectory=/home/benjamin/pi/MiTemperature2
+# venv first, so the callback's "#!/usr/bin/env python3" finds prometheus_client
+Environment=PATH=/home/benjamin/pi/MiTemperature2/bin:/usr/bin:/bin
+ExecStart=/home/benjamin/pi/MiTemperature2/bin/python ./MiTemperature2.py --bthome-onlyfull-transmit --watchdogtimer 5 --devicelistfile mysensors.ini --onlydevicelist --battery --callback ./prometheus/sendToPrometheus.py --callback-interval 60
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+Restart=on-failure
+RestartSec=30
+StartLimitInterval=350
+StartLimitBurst=10
+
+[Install]
+WantedBy=multi-user.target

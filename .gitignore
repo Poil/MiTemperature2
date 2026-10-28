@@ -2,3 +2,9 @@ venv
 .vscode
 __pycache__/
 *.py[cod]
+# venv created in place (python3 -m venv --system-site-packages .)
+/bin/
+/lib/
+/include/
+/pyvenv.cfg
+/mysensors.ini
